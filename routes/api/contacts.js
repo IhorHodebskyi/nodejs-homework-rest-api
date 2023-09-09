@@ -79,11 +79,11 @@ router.put("/:contactId", async (req, res, next) => {
   try {
     const { error } = addSchema.validate(req.body);
     if (error) {
-      // const { phone, email, name } = req.body;
-      // if (phone || email || name) {
-      throw HttpError(400, error.message);
-      // }
-      // throw HttpError(400, "missing fields");
+      const { phone, email, name } = req.body;
+      if (phone || email || name) {
+        throw HttpError(400, error.message);
+      }
+      throw HttpError(400, "missing fields");
     }
     const id = req.params.contactId;
 
