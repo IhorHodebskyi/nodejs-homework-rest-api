@@ -9,7 +9,10 @@ const validateBody = (schema) => {
       if (keys.length > 0) {
         throw HttpError(400, error.message);
       }
-      throw HttpError(400, patch ? "missing field favorite" : "missing fields");
+      throw HttpError(
+        400,
+        !patch ? "missing fields" : "missing field favorite"
+      );
     }
     next();
   };
