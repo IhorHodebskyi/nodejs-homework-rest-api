@@ -2,19 +2,22 @@ const { ctrlWrapper } = require("../helpers");
 const services = require("../services/services");
 
 const listContacts = async (req, res) => {
-  const result = await services.allContacts();
+  const { _id: owner } = req.user;
+  const { page = 1, limit = 3 } = req.query;
+  const result = await services.allContacts(owner, page, limit);
   res.json(result);
 };
 
 const getContactById = async (req, res) => {
   const { contactId } = req.params;
-  const result = await services.oneContact(contactId);
+  const result = await services.getOneContact(contactId);
   res.json(result);
 };
 
 const addContact = async (req, res) => {
+  const { _id: owner } = req.user;
   const { body } = req;
-  const result = await services.newContact(body);
+  const result = await services.newContact(body, owner);
   res.status(201).json(result);
 };
 

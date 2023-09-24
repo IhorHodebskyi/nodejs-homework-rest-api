@@ -1,8 +1,11 @@
 const { User } = require("../models/user");
 const { HttpError } = require("../helpers");
 const bcrypt = require("bcrypt");
+const jwt = require("jsonwebtoken");
 
-const newUser = async (body) => {
+const { SECRET_KEY } = process.env;
+
+const signUp = async (body) => {
   const { email, password } = body;
   const user = await User.findOne({ email });
   if (user) {
@@ -10,10 +13,16 @@ const newUser = async (body) => {
   }
   const hashPassword = await bcrypt.hash(password, 10);
   const result = await User.create({ ...body, password: hashPassword });
-  return result;
+  const data = {
+    user: {
+      email: result.email,
+      subscription: result.subscription,
+    },
+  };
+  return data;
 };
 
-const oldUser = async (email, password) => {
+const signIn = async (email, password) => {
   const user = await User.findOne({ email });
   if (!user) {
     throw HttpError(401, "Email or password is wrong");
@@ -22,13 +31,20 @@ const oldUser = async (email, password) => {
   if (!passwordCompare) {
     throw HttpError(401, "Email or password is wrong");
   }
-  const token = "exampletoken";
-  const result = {
+  const payload = { id: user._id };
+  const token = jwt.sign(payload, SECRET_KEY, { expiresIn: "23h" });
+  await User.findByIdAndUpdate(user._id, { token });
+  const data = {
     token,
-    email: user.email,
-    subscription: user.subscription,
+    user: {
+      email: user.email,
+      subscription: user.subscription,
+    },
   };
-  return result;
+  return data;
 };
 
-module.exports = { newUser, oldUser };
+const logoutToken = async (_id) =>
+  await User.findByIdAndUpdate(_id, { token: "" });
+
+module.exports = { signUp, signIn, logoutToken };
