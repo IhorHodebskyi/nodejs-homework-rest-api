@@ -5,6 +5,7 @@ const validateBody = (schema) => {
     const { error } = schema.validate(req.body);
     if (error) {
       const keys = Object.keys(req.body);
+      console.log(keys);
       const { patch } = req.route.methods;
       if (keys.length > 0) {
         throw HttpError(400, error.message);

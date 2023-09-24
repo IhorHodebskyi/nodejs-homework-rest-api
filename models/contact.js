@@ -2,22 +2,30 @@ const { Schema, model } = require("mongoose");
 const Joi = require("joi");
 
 const { handleMongooseError } = require("../helpers");
-const contactSchema = new Schema({
-  name: {
-    type: String,
-    required: [true, "Set name for contact"],
+const contactSchema = new Schema(
+  {
+    name: {
+      type: String,
+      required: [true, "Set name for contact"],
+    },
+    email: {
+      type: String,
+    },
+    phone: {
+      type: String,
+    },
+    favorite: {
+      type: Boolean,
+      default: false,
+    },
+    owner: {
+      type: Schema.Types.ObjectId,
+      ref: "user",
+      required: true,
+    },
   },
-  email: {
-    type: String,
-  },
-  phone: {
-    type: String,
-  },
-  favorite: {
-    type: Boolean,
-    default: false,
-  },
-},{versionKey: false});
+  { versionKey: false }
+);
 
 contactSchema.post("save", handleMongooseError);
 
@@ -38,6 +46,11 @@ const updateFavoriteSchema = Joi.object({
   "object.unknown": `{#key} field is not allowed`,
 });
 
+const schemas = {
+  addSchema,
+  updateFavoriteSchema,
+};
+
 const Contact = model("contact", contactSchema);
 
-module.exports = { Contact, addSchema, updateFavoriteSchema };
+module.exports = { Contact, schemas };
