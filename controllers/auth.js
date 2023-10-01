@@ -3,13 +3,25 @@ const services = require("../services/authServices");
 
 const register = async (req, res) => {
   const { body } = req;
-  const result = await services.signUp(body);
+  const result = await services.register(body);
   res.status(201).json(result);
+};
+
+const verifyEmail = async (req, res) => {
+  const { verificationToken } = req.params;
+  await services.verifyEmail(verificationToken);
+  res.status(200).json({ message: "Verification successful" });
+};
+
+const resendVerifyEmail = async (req, res) => {
+  const { email } = req.user;
+  await services.resendVerifyEmail(email);
+  res.status(200).json({ message: "Verification email sent" });
 };
 
 const login = async (req, res) => {
   const { email, password } = req.body;
-  const result = await services.signIn(email, password);
+  const result = await services.login(email, password);
   res.status(200).json(result);
 };
 
@@ -33,6 +45,8 @@ const updateAvatar = async (req, res) => {
 
 module.exports = {
   register: ctrlWrapper(register),
+  verifyEmail: ctrlWrapper(verifyEmail),
+  resendVerifyEmail: ctrlWrapper(resendVerifyEmail),
   login: ctrlWrapper(login),
   getCurrent: ctrlWrapper(getCurrent),
   logout: ctrlWrapper(logout),
