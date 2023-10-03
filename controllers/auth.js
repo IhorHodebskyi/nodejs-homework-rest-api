@@ -14,7 +14,7 @@ const verifyEmail = async (req, res) => {
 };
 
 const resendVerifyEmail = async (req, res) => {
-  const { email } = req.user;
+  const { email } = req.body;
   await services.resendVerifyEmail(email);
   res.status(200).json({ message: "Verification email sent" });
 };

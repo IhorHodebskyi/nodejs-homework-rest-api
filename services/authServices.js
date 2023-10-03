@@ -55,11 +55,11 @@ const verifyEmail = async (verificationToken) => {
 };
 
 const resendVerifyEmail = async (email) => {
-  const { user } = await User.findOne({ email });
+  const user = await User.findOne({ email });
   if (!user) {
     throw HttpError(401);
   }
-  if (!user.verify) {
+  if (user.verify) {
     throw HttpError(400, "Verification has already been passed");
   }
   const message = {
