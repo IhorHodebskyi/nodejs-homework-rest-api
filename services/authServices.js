@@ -46,7 +46,7 @@ const register = async (body) => {
 const verifyEmail = async (verificationToken) => {
   const user = await User.findOne({ verificationToken });
   if (!user) {
-    throw HttpError(401);
+    throw HttpError(404, "User not found");
   }
   await User.findByIdAndUpdate(user._id, {
     verify: true,
