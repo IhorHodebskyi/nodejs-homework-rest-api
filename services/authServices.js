@@ -1,17 +1,18 @@
 const { User } = require("../models/user");
-const { HttpError } = require("../helpers");
+const { HttpError, sendEmail } = require("../helpers");
 const bcrypt = require("bcrypt");
 const jwt = require("jsonwebtoken");
 const gravatar = require("gravatar");
 const path = require("path");
 const fs = require("fs/promises");
 const Jimp = require("jimp");
+const { nanoid } = require("nanoid");
 
 const avatarDir = path.join(__dirname, "../", "public", "avatar");
 
-const { SECRET_KEY } = process.env;
+const { SECRET_KEY, BASE_URL } = process.env;
 
-const signUp = async (body) => {
+const register = async (body) => {
   const { email, password } = body;
   const user = await User.findOne({ email });
   if (user) {
@@ -19,11 +20,20 @@ const signUp = async (body) => {
   }
   const hashPassword = await bcrypt.hash(password, 10);
   const avatarURL = gravatar.url(email);
+  const verificationToken = nanoid();
   const result = await User.create({
     ...body,
     password: hashPassword,
     avatarURL,
+    verificationToken,
   });
+  const message = {
+    to: email,
+    subject: "Verify email",
+    html: `<a href="${BASE_URL}/users/verify/${verificationToken}" target="_blank">Click verify email</a>`,
+  };
+  await sendEmail(message);
+
   const data = {
     user: {
       email: result.email,
@@ -33,10 +43,40 @@ const signUp = async (body) => {
   return data;
 };
 
-const signIn = async (email, password) => {
+const verifyEmail = async (verificationToken) => {
+  const user = await User.findOne({ verificationToken });
+  if (!user) {
+    throw HttpError(404, "User not found");
+  }
+  await User.findByIdAndUpdate(user._id, {
+    verify: true,
+    verificationToken: "",
+  });
+};
+
+const resendVerifyEmail = async (email) => {
+  const user = await User.findOne({ email });
+  if (!user) {
+    throw HttpError(401);
+  }
+  if (user.verify) {
+    throw HttpError(400, "Verification has already been passed");
+  }
+  const message = {
+    to: email,
+    subject: "Verify email",
+    html: `<a href="${BASE_URL}/users/verify/${user.verificationToken}" target="_blank">Click verify email</a>`,
+  };
+  await sendEmail(message);
+};
+
+const login = async (email, password) => {
   const user = await User.findOne({ email });
   if (!user) {
     throw HttpError(401, "Email or password is wrong");
+  }
+  if (!user.verify) {
+    throw HttpError(404);
   }
   const passwordCompare = await bcrypt.compare(password, user.password);
   if (!passwordCompare) {
@@ -70,4 +110,11 @@ const avatar = async (_id, tmpUpload, originalname) => {
   return { avatarURL };
 };
 
-module.exports = { signUp, signIn, logoutToken, avatar };
+module.exports = {
+  register,
+  verifyEmail,
+  login,
+  logoutToken,
+  avatar,
+  resendVerifyEmail,
+};
